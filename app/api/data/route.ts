@@ -49,7 +49,11 @@ async function readFromBlob(): Promise<AppData> {
     const { blobs } = await list({ prefix: BLOB_PATHNAME, token });
     const target = blobs.find((b) => b.pathname === BLOB_PATHNAME);
     if (!target) return SEED;
-    const res = await fetch(target.url, { cache: "no-store" });
+    // Cache-bust the blob URL: Vercel's CDN caches blob content by default
+    // with a long Cache-Control max-age, so a fresh PUT can appear "lost"
+    // until the CDN expires. Adding a unique query string forces a miss.
+    const url = `${target.url}${target.url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return SEED;
     const parsed = (await res.json()) as unknown;
     if (!isAppData(parsed)) return SEED;
@@ -101,6 +105,9 @@ export async function PUT(req: Request) {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
+      // 0 = blob URL serves fresh content on every request, so subsequent
+      // GETs see the latest data immediately after a write.
+      cacheControlMaxAge: 0,
       token: blobToken,
     });
     return NextResponse.json({ ok: true, url: result.url });
