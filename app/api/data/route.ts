@@ -9,6 +9,16 @@ export const revalidate = 0;
 const BLOB_PATHNAME = "data.json";
 const SEED = seedRaw as AppData;
 
+// Find a Vercel Blob token even if Vercel injected it under a custom name.
+// Vercel may use either BLOB_READ_WRITE_TOKEN or <STORE_NAME>_READ_WRITE_TOKEN.
+function findBlobToken(): string | undefined {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  for (const [k, v] of Object.entries(process.env)) {
+    if (k.endsWith("_READ_WRITE_TOKEN") && v) return v;
+  }
+  return undefined;
+}
+
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
@@ -33,9 +43,10 @@ function isAppData(x: unknown): x is AppData {
 }
 
 async function readFromBlob(): Promise<AppData> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return SEED;
+  const token = findBlobToken();
+  if (!token) return SEED;
   try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME });
+    const { blobs } = await list({ prefix: BLOB_PATHNAME, token });
     const target = blobs.find((b) => b.pathname === BLOB_PATHNAME);
     if (!target) return SEED;
     const res = await fetch(target.url, { cache: "no-store" });
@@ -57,11 +68,12 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   if (!checkToken(req)) return unauthorized();
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const blobToken = findBlobToken();
+  if (!blobToken) {
     return NextResponse.json(
       {
         error:
-          "Blob storage is not configured. Add a Vercel Blob store and set BLOB_READ_WRITE_TOKEN.",
+          "Blob storage is not configured. Add a Vercel Blob store and connect it to this project.",
       },
       { status: 500 },
     );
@@ -75,11 +87,11 @@ export async function PUT(req: Request) {
   if (!isAppData(body)) return badRequest("Invalid shape: expected { types: [...] }");
 
   try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME });
+    const { blobs } = await list({ prefix: BLOB_PATHNAME, token: blobToken });
     for (const b of blobs) {
       if (b.pathname === BLOB_PATHNAME) {
         try {
-          await del(b.url);
+          await del(b.url, { token: blobToken });
         } catch {
           // ignore
         }
@@ -89,6 +101,7 @@ export async function PUT(req: Request) {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
+      token: blobToken,
     });
     return NextResponse.json({ ok: true, url: result.url });
   } catch (e) {
@@ -101,15 +114,14 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   if (!checkToken(req)) return unauthorized();
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json({ ok: true });
-  }
+  const blobToken = findBlobToken();
+  if (!blobToken) return NextResponse.json({ ok: true });
   try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME });
+    const { blobs } = await list({ prefix: BLOB_PATHNAME, token: blobToken });
     for (const b of blobs) {
       if (b.pathname === BLOB_PATHNAME) {
         try {
-          await del(b.url);
+          await del(b.url, { token: blobToken });
         } catch {
           // ignore
         }
