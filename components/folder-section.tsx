@@ -5,21 +5,20 @@ import { ChevronDown, Folder as FolderIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MaterialCard } from "@/components/material-card";
 import { materialRef } from "@/lib/data";
-import type { Course, Folder } from "@/lib/types";
+import type { Course, CourseType, Folder } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { toSlug } from "@/components/search-modal";
 
 interface Props {
+  type: CourseType;
   course: Course;
   folder: Folder;
 }
 
-export function FolderSection({ course, folder }: Props) {
+export function FolderSection({ type, course, folder }: Props) {
   const [open, setOpen] = React.useState(true);
-  const id = toSlug(folder.name);
 
   return (
-    <section id={id} className="scroll-mt-24">
+    <section id={`folder-${folder.id}`} className="scroll-mt-24">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -59,9 +58,9 @@ export function FolderSection({ course, folder }: Props) {
               ) : (
                 folder.materials.map((m, i) => (
                   <MaterialCard
-                    key={m.url + i}
+                    key={m.id}
                     material={m}
-                    ref_={materialRef(course, folder.name, m)}
+                    ref_={materialRef(type, course, folder, m)}
                     index={i}
                   />
                 ))

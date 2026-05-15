@@ -2,8 +2,8 @@
 
 import type { MaterialRef } from "./types";
 
-const FAV_KEY = "mh:favorites";
-const RECENT_KEY = "mh:recent";
+const FAV_KEY = "mh:favorites:v2";
+const RECENT_KEY = "mh:recent:v2";
 const RECENT_LIMIT = 20;
 
 function read<T>(key: string, fallback: T): T {
@@ -26,8 +26,21 @@ function write<T>(key: string, value: T) {
   }
 }
 
+function isValid(m: unknown): m is MaterialRef {
+  if (!m || typeof m !== "object") return false;
+  const r = m as Record<string, unknown>;
+  return (
+    typeof r.typeId === "string" &&
+    typeof r.courseId === "string" &&
+    typeof r.folderId === "string" &&
+    typeof r.url === "string" &&
+    typeof r.title === "string" &&
+    typeof r.type === "string"
+  );
+}
+
 export function getFavorites(): MaterialRef[] {
-  return read<MaterialRef[]>(FAV_KEY, []);
+  return read<MaterialRef[]>(FAV_KEY, []).filter(isValid);
 }
 
 export function isFavorite(url: string): boolean {
@@ -48,7 +61,7 @@ export function toggleFavorite(ref: MaterialRef): boolean {
 }
 
 export function getRecent(): MaterialRef[] {
-  return read<MaterialRef[]>(RECENT_KEY, []);
+  return read<MaterialRef[]>(RECENT_KEY, []).filter(isValid);
 }
 
 export function pushRecent(ref: MaterialRef) {

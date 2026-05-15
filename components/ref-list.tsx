@@ -8,6 +8,8 @@ import type { MaterialRef, MaterialType } from "@/lib/types";
 import { toggleFavorite, pushRecent } from "@/lib/storage";
 import { canEmbed } from "@/lib/drive";
 import { EmbedViewer } from "@/components/embed-viewer";
+import { useAppData } from "@/lib/use-data";
+import { findCourse } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const typeIcon: Record<MaterialType, React.ComponentType<{ className?: string }>> = {
@@ -27,12 +29,12 @@ const typeColor: Record<MaterialType, string> = {
 interface Props {
   items: MaterialRef[];
   onChange?: () => void;
-  emptyHint?: string;
   starred?: boolean;
 }
 
 export function RefList({ items, onChange, starred }: Props) {
   const [viewer, setViewer] = React.useState<MaterialRef | null>(null);
+  const { data } = useAppData();
 
   if (items.length === 0) {
     return null;
@@ -43,6 +45,10 @@ export function RefList({ items, onChange, starred }: Props) {
       <ul className="divide-y divide-white/5 overflow-hidden rounded-xl border border-white/10 bg-card/40 backdrop-blur-md">
         {items.map((m, i) => {
           const Icon = typeIcon[m.type];
+          const found = findCourse(data, m.typeId, m.courseId);
+          const courseName = found?.course.name ?? m.courseId;
+          const folder = found?.course.folders.find((f) => f.id === m.folderId);
+          const folderName = folder?.name ?? m.folderId;
           return (
             <li
               key={m.url + i}
@@ -52,14 +58,17 @@ export function RefList({ items, onChange, starred }: Props) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{m.title}</div>
                 <div className="truncate text-xs text-muted-foreground">
-                  <Link href={`/courses/${m.courseId}`} className="hover:text-foreground">
-                    {m.folder}
+                  <Link
+                    href={`/courses/${m.typeId}/${m.courseId}`}
+                    className="hover:text-foreground"
+                  >
+                    {courseName} · {folderName}
                   </Link>{" "}
                   · {m.type.toUpperCase()}
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {canEmbed({ title: m.title, type: m.type, url: m.url }) && (
+                {canEmbed({ id: "", title: m.title, type: m.type, url: m.url }) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -106,6 +115,7 @@ export function RefList({ items, onChange, starred }: Props) {
           open={!!viewer}
           onOpenChange={(v) => !v && setViewer(null)}
           material={{
+            id: "",
             title: viewer.title,
             type: viewer.type,
             url: viewer.url,

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Search, Command, Github } from "lucide-react";
+import { Search, Command } from "lucide-react";
 import { SearchModal } from "@/components/search-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -35,7 +35,7 @@ export function Navbar() {
           className="group ml-auto flex w-full max-w-md items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/10 md:ml-0"
         >
           <Search className="h-4 w-4" />
-          <span className="flex-1 text-left">Search courses, materials…</span>
+          <span className="flex-1 text-left">Search course types, courses, materials…</span>
           <kbd className="hidden items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium md:inline-flex">
             <Command className="h-3 w-3" />K
           </kbd>
@@ -43,15 +43,6 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <ThemeToggle />
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-foreground md:inline-flex"
-            aria-label="GitHub"
-          >
-            <Github className="h-4 w-4" />
-          </a>
         </div>
       </header>
 

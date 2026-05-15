@@ -1,11 +1,18 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, FileText, Folder, GraduationCap, ArrowRight } from "lucide-react";
+import {
+  Search,
+  FileText,
+  Folder as FolderIcon,
+  GraduationCap,
+  Library,
+  ArrowRight,
+} from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { searchAll, type SearchHit } from "@/lib/data";
+import { useAppData } from "@/lib/use-data";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -18,8 +25,9 @@ export function SearchModal({ open, onOpenChange }: Props) {
   const [active, setActive] = React.useState(0);
   const router = useRouter();
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { data } = useAppData();
 
-  const hits = React.useMemo<SearchHit[]>(() => searchAll(q), [q]);
+  const hits = React.useMemo<SearchHit[]>(() => searchAll(data, q), [data, q]);
 
   React.useEffect(() => {
     if (open) {
@@ -40,9 +48,7 @@ export function SearchModal({ open, onOpenChange }: Props) {
         setActive((i) => Math.max(0, i - 1));
       } else if (e.key === "Enter") {
         const hit = hits[active];
-        if (hit) {
-          go(hit);
-        }
+        if (hit) go(hit);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -51,9 +57,17 @@ export function SearchModal({ open, onOpenChange }: Props) {
   }, [open, hits, active]);
 
   function go(hit: SearchHit) {
-    if (hit.kind === "course") router.push(`/courses/${hit.course.id}`);
-    else if (hit.kind === "folder") router.push(`/courses/${hit.course.id}#${slug(hit.folderName)}`);
-    else if (hit.kind === "material") router.push(`/courses/${hit.course.id}#${slug(hit.folderName)}`);
+    if (hit.kind === "type") router.push(`/courses/${hit.type.id}`);
+    else if (hit.kind === "course")
+      router.push(`/courses/${hit.type.id}/${hit.course.id}`);
+    else if (hit.kind === "folder")
+      router.push(
+        `/courses/${hit.type.id}/${hit.course.id}#folder-${hit.folder.id}`,
+      );
+    else if (hit.kind === "material")
+      router.push(
+        `/courses/${hit.type.id}/${hit.course.id}#folder-${hit.folder.id}`,
+      );
     onOpenChange(false);
   }
 
@@ -68,7 +82,7 @@ export function SearchModal({ open, onOpenChange }: Props) {
             setQ(e.target.value);
             setActive(0);
           }}
-          placeholder="Search courses, folders, materials…"
+          placeholder="Search course types, courses, folders, materials…"
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
         <kbd className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] sm:inline-block">
@@ -78,7 +92,7 @@ export function SearchModal({ open, onOpenChange }: Props) {
       <div className="max-h-[60vh] overflow-y-auto p-2">
         {q.trim() === "" ? (
           <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-            Start typing to search across all courses and materials.
+            Start typing to search across everything.
           </div>
         ) : hits.length === 0 ? (
           <div className="px-3 py-8 text-center text-sm text-muted-foreground">
@@ -88,19 +102,30 @@ export function SearchModal({ open, onOpenChange }: Props) {
           <ul className="space-y-1">
             {hits.map((hit, i) => {
               const Icon =
-                hit.kind === "course" ? GraduationCap : hit.kind === "folder" ? Folder : FileText;
+                hit.kind === "type"
+                  ? Library
+                  : hit.kind === "course"
+                    ? GraduationCap
+                    : hit.kind === "folder"
+                      ? FolderIcon
+                      : FileText;
               const label =
-                hit.kind === "course"
-                  ? hit.course.name
-                  : hit.kind === "folder"
-                    ? `${hit.folderName} — ${hit.course.name}`
-                    : `${hit.material.title} — ${hit.course.name}`;
+                hit.kind === "type"
+                  ? hit.type.name
+                  : hit.kind === "course"
+                    ? `${hit.course.name} — ${hit.type.name}`
+                    : hit.kind === "folder"
+                      ? `${hit.folder.name} — ${hit.course.name}`
+                      : `${hit.material.title} — ${hit.course.name}`;
               const sub =
-                hit.kind === "course"
-                  ? "Course"
-                  : hit.kind === "folder"
-                    ? "Folder"
-                    : (hit.material.description ?? hit.material.type.toUpperCase());
+                hit.kind === "type"
+                  ? "Course type"
+                  : hit.kind === "course"
+                    ? "Course"
+                    : hit.kind === "folder"
+                      ? "Folder"
+                      : (hit.material.description ??
+                        hit.material.type.toUpperCase());
               return (
                 <li key={i}>
                   <button
@@ -117,7 +142,9 @@ export function SearchModal({ open, onOpenChange }: Props) {
                     <Icon className="h-4 w-4 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-foreground">{label}</div>
-                      <div className="truncate text-xs text-muted-foreground">{sub}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {sub}
+                      </div>
                     </div>
                     <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
                   </button>
@@ -130,9 +157,3 @@ export function SearchModal({ open, onOpenChange }: Props) {
     </Dialog>
   );
 }
-
-function slug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-export { slug as toSlug };

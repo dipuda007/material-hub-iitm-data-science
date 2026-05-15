@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,24 +10,29 @@ import {
   Zap,
   GraduationCap,
 } from "lucide-react";
-import { getAllCourses, countMaterials } from "@/lib/data";
-import { CourseCard } from "@/components/course-card";
+import { useAppData } from "@/lib/use-data";
+import { countMaterialsInType } from "@/lib/data";
+import { TypeCard } from "@/components/type-card";
 
 export default function HomePage() {
-  const courses = getAllCourses();
-  const totalMaterials = courses.reduce((acc, c) => acc + countMaterials(c), 0);
-  const featured = courses.slice(0, 6);
+  const { data } = useAppData();
+  const types = data.types;
+  const totalCourses = types.reduce((acc, t) => acc + t.courses.length, 0);
+  const totalMaterials = types.reduce(
+    (acc, t) => acc + countMaterialsInType(t),
+    0,
+  );
 
   const features = [
     {
       icon: Folder,
-      title: "Course-organized",
-      desc: "Folders for notes, assignments, PYQs and YouTube — one click away.",
+      title: "Type → Course → Folder",
+      desc: "Group by Foundation, Diploma, BSc, BS, NPTEL — or any type you create.",
     },
     {
       icon: Search,
       title: "Instant search",
-      desc: "Hit ⌘K to fuzzy-search across every course and resource.",
+      desc: "Hit ⌘K to fuzzy-search across every type, course and resource.",
     },
     {
       icon: Star,
@@ -70,21 +77,15 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-lg transition-transform hover:scale-[1.02]"
             >
               <GraduationCap className="h-4 w-4" />
-              Browse courses
+              Browse types
               <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium backdrop-blur transition-colors hover:bg-white/10"
-            >
-              How it works
             </Link>
           </div>
 
-          <dl className="mt-10 grid grid-cols-3 gap-4 max-w-md">
-            <Stat label="Courses" value={courses.length} />
+          <dl className="mt-10 grid max-w-md grid-cols-3 gap-4">
+            <Stat label="Types" value={types.length} />
+            <Stat label="Courses" value={totalCourses} />
             <Stat label="Resources" value={totalMaterials} />
-            <Stat label="Free" value="∞" />
           </dl>
         </div>
       </section>
@@ -125,7 +126,7 @@ export default function HomePage() {
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Jump in
             </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight">Featured courses</h2>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight">Course types</h2>
           </div>
           <Link
             href="/courses"
@@ -135,8 +136,8 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((c, i) => (
-            <CourseCard key={c.id} course={c} index={i} />
+          {types.map((t, i) => (
+            <TypeCard key={t.id} type={t} index={i} />
           ))}
         </div>
       </section>
@@ -147,7 +148,9 @@ export default function HomePage() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </dt>
       <dd className="mt-1 text-2xl font-semibold tracking-tight">{value}</dd>
     </div>
   );

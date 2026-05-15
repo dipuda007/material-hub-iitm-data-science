@@ -44,9 +44,7 @@ export default function RootLayout({
             <Navbar />
             <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
             <footer className="border-t border-white/5 px-4 py-6 text-center text-xs text-muted-foreground md:px-8">
-              Built with Next.js · Edit{" "}
-              <code className="rounded bg-white/5 px-1">data/courses.json</code>{" "}
-              to manage your materials.
+              Material Hub IITM · Built with Next.js
             </footer>
           </div>
         </div>

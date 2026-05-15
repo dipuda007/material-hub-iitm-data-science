@@ -8,33 +8,41 @@ import {
   GraduationCap,
   Star,
   Clock,
-  Info,
   PanelLeftClose,
   PanelLeft,
   Sparkles,
+  Lock,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdmin, onAuthChange } from "@/lib/auth";
 
-const items = [
+const baseItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", icon: GraduationCap },
   { href: "/favorites", label: "Favorites", icon: Star },
   { href: "/recent", label: "Recent", icon: Clock },
-  { href: "/about", label: "About", icon: Info },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+  const [admin, setAdmin] = React.useState(false);
 
   React.useEffect(() => {
     const stored = localStorage.getItem("mh:sidebar");
     if (stored === "1") setCollapsed(true);
+    setAdmin(isAdmin());
+    return onAuthChange(() => setAdmin(isAdmin()));
   }, []);
 
   React.useEffect(() => {
     localStorage.setItem("mh:sidebar", collapsed ? "1" : "0");
   }, [collapsed]);
+
+  const items = admin
+    ? [...baseItems, { href: "/admin", label: "Admin", icon: Shield }]
+    : baseItems;
 
   return (
     <aside
@@ -102,10 +110,21 @@ export function Sidebar() {
         <div className="m-3 rounded-lg border border-white/10 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 p-3 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">IITM BS DS</p>
           <p className="mt-1 leading-snug">
-            Your personal study hub. Edit{" "}
-            <code className="rounded bg-white/10 px-1">data/courses.json</code>{" "}
-            to add content.
+            {admin ? (
+              <>You&apos;re signed in as admin.</>
+            ) : (
+              <>Your personal study hub.</>
+            )}
           </p>
+          {!admin && (
+            <Link
+              href="/admin/login"
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-foreground/70 hover:text-foreground"
+            >
+              <Lock className="h-3 w-3" />
+              Admin login
+            </Link>
+          )}
         </div>
       )}
     </aside>

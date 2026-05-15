@@ -1,25 +1,21 @@
-import type { Metadata } from "next";
-import { getAllCourses } from "@/lib/data";
-import { CourseCard } from "@/components/course-card";
+"use client";
+
+import { useAppData } from "@/lib/use-data";
+import { TypeCard } from "@/components/type-card";
 import { PageHeader } from "@/components/page-header";
 
-export const metadata: Metadata = {
-  title: "Courses",
-  description: "All IITM BS Data Science courses in one place.",
-};
-
 export default function CoursesPage() {
-  const courses = getAllCourses();
+  const { data } = useAppData();
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
         eyebrow="Library"
-        title="All courses"
-        description="Every course you've added to your hub. Click a card to open its folders."
+        title="Course types"
+        description="Pick a category to see the courses you've added. Sign in as admin to add new types."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {courses.map((c, i) => (
-          <CourseCard key={c.id} course={c} index={i} />
+        {data.types.map((t, i) => (
+          <TypeCard key={t.id} type={t} index={i} />
         ))}
       </div>
     </div>
