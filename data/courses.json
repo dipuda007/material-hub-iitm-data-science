@@ -1,0 +1,350 @@
+{
+  "courses": [
+    {
+      "id": "math-ds",
+      "name": "Mathematics for Data Science",
+      "code": "MATH",
+      "icon": "Sigma",
+      "accent": "from-violet-500 to-indigo-500",
+      "description": "Linear algebra, calculus and discrete math foundations for data science.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Week 1 — Vectors & Matrices",
+              "description": "Intro lecture notes covering vector basics.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/1abc/preview"
+            },
+            {
+              "title": "Week 2 — Eigenvalues",
+              "description": "Hand-written notes from the live session.",
+              "type": "pdf",
+              "url": "https://example.com/math-week2.pdf"
+            }
+          ]
+        },
+        {
+          "name": "Assignments",
+          "materials": [
+            {
+              "title": "GA-1 Solutions Walkthrough",
+              "description": "Step-by-step solution video.",
+              "type": "video",
+              "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            }
+          ]
+        },
+        {
+          "name": "PYQs",
+          "materials": [
+            {
+              "title": "End-Term 2024",
+              "description": "Previous year question paper.",
+              "type": "pdf",
+              "url": "https://example.com/math-2024.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stats",
+      "name": "Statistics",
+      "code": "STAT",
+      "icon": "BarChart3",
+      "accent": "from-emerald-500 to-teal-500",
+      "description": "Probability, distributions, hypothesis testing and inference.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Probability Foundations",
+              "description": "Sample space, events and axioms.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/2abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "Practice Problems",
+          "materials": [
+            {
+              "title": "100 Probability Problems",
+              "description": "Curated practice set.",
+              "type": "pdf",
+              "url": "https://example.com/prob-problems.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ct",
+      "name": "Computational Thinking",
+      "code": "CT",
+      "icon": "Cpu",
+      "accent": "from-orange-500 to-amber-500",
+      "description": "Algorithmic thinking, pseudocode and problem decomposition.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Algorithm Basics",
+              "description": "Sequencing, selection and iteration.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/3abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "YouTube Resources",
+          "materials": [
+            {
+              "title": "CT Crash Course",
+              "description": "1-hour revision playlist.",
+              "type": "video",
+              "url": "https://www.youtube.com/watch?v=8mAITcNt710"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python Programming",
+      "code": "PY",
+      "icon": "Code2",
+      "accent": "from-yellow-400 to-amber-500",
+      "description": "Python syntax, data structures, OOP and standard library.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Strings & Lists",
+              "description": "Slicing, comprehensions, common patterns.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/4abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "PYQs",
+          "materials": [
+            {
+              "title": "Python End-Term 2024",
+              "description": "Solved with explanations.",
+              "type": "pdf",
+              "url": "https://example.com/python-2024.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dbms",
+      "name": "DBMS",
+      "code": "DBMS",
+      "icon": "Database",
+      "accent": "from-sky-500 to-blue-500",
+      "description": "Relational model, SQL, normalization and transactions.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "ER Diagrams",
+              "description": "Conceptual modeling cheatsheet.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/5abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "Practice Problems",
+          "materials": [
+            {
+              "title": "SQL Practice Set",
+              "description": "50 hand-picked SQL queries.",
+              "type": "website",
+              "url": "https://sqlzoo.net"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mlf",
+      "name": "Machine Learning Foundations",
+      "code": "MLF",
+      "icon": "Brain",
+      "accent": "from-pink-500 to-rose-500",
+      "description": "Supervised & unsupervised learning fundamentals.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Linear Regression",
+              "description": "Closed-form & gradient descent derivations.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/6abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "YouTube Resources",
+          "materials": [
+            {
+              "title": "Andrew Ng — Linear Regression",
+              "description": "Classic lecture on the topic.",
+              "type": "video",
+              "url": "https://www.youtube.com/watch?v=4b4MUYve_U8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bdm",
+      "name": "Business Data Management",
+      "code": "BDM",
+      "icon": "Briefcase",
+      "accent": "from-fuchsia-500 to-purple-500",
+      "description": "Business analytics, ETL and reporting.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Intro to Business Analytics",
+              "description": "Slides + summary notes.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/7abc/preview"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "java",
+      "name": "Java Programming",
+      "code": "JAVA",
+      "icon": "Coffee",
+      "accent": "from-red-500 to-orange-500",
+      "description": "Core Java, OOP and JVM essentials.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "OOP in Java",
+              "description": "Inheritance, polymorphism and interfaces.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/8abc/preview"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "syscmd",
+      "name": "System Commands",
+      "code": "SYS",
+      "icon": "Terminal",
+      "accent": "from-zinc-500 to-slate-500",
+      "description": "Unix/Linux command line essentials.",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Top 50 Commands",
+              "description": "Quick reference cheatsheet.",
+              "type": "pdf",
+              "url": "https://example.com/syscmd-cheatsheet.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "english",
+      "name": "English",
+      "code": "ENG",
+      "icon": "BookOpen",
+      "accent": "from-lime-500 to-green-500",
+      "description": "Communication, grammar and writing skills.",
+      "folders": [
+        {
+          "name": "Miscellaneous",
+          "materials": [
+            {
+              "title": "Common Grammar Mistakes",
+              "description": "Quick reference document.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/9abc/preview"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mad1",
+      "name": "MAD 1",
+      "code": "MAD1",
+      "icon": "Layout",
+      "accent": "from-cyan-500 to-sky-500",
+      "description": "Modern Application Development - Part 1 (Flask).",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Flask Basics",
+              "description": "Routing, templates and forms.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/10abc/preview"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mad2",
+      "name": "MAD 2",
+      "code": "MAD2",
+      "icon": "Layers",
+      "accent": "from-indigo-500 to-blue-600",
+      "description": "Modern Application Development - Part 2 (Vue.js, APIs).",
+      "folders": [
+        {
+          "name": "Week-wise Notes",
+          "materials": [
+            {
+              "title": "Vue Composition API",
+              "description": "Reactivity, refs and composables.",
+              "type": "drive",
+              "url": "https://drive.google.com/file/d/11abc/preview"
+            }
+          ]
+        },
+        {
+          "name": "YouTube Resources",
+          "materials": [
+            {
+              "title": "Vue 3 Crash Course",
+              "description": "Practical walkthrough.",
+              "type": "video",
+              "url": "https://www.youtube.com/watch?v=YrxBCBibVo0"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
