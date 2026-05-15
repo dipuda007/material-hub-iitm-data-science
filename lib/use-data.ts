@@ -8,6 +8,7 @@ export function useAppData(): {
   data: AppData;
   ready: boolean;
   refresh: () => Promise<void>;
+  setData: (d: AppData) => void;
 } {
   const [data, setData] = React.useState<AppData>(() => getSeed());
   const [ready, setReady] = React.useState(false);
@@ -25,5 +26,5 @@ export function useAppData(): {
     });
   }, [refresh]);
 
-  return { data, ready, refresh };
+  return { data, ready, refresh, setData };
 }

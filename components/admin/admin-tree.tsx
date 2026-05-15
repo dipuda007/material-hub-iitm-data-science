@@ -39,6 +39,7 @@ import { ConfirmModal } from "@/components/admin/confirm-modal";
 
 interface Props {
   data: AppData;
+  onOptimisticUpdate?: (d: AppData) => void;
 }
 
 interface EditTarget {
@@ -73,7 +74,7 @@ const matColor: Record<MaterialType, string> = {
   website: "text-sky-300",
 };
 
-export function AdminTree({ data }: Props) {
+export function AdminTree({ data, onOptimisticUpdate }: Props) {
   const [openTypes, setOpenTypes] = React.useState<Record<string, boolean>>({});
   const [openCourses, setOpenCourses] = React.useState<Record<string, boolean>>(
     {},
@@ -102,10 +103,15 @@ export function AdminTree({ data }: Props) {
       toast.error("Not signed in");
       return false;
     }
+    const previous = data;
     const next: AppData = JSON.parse(JSON.stringify(data));
     mut(next);
+    // Optimistic UI: show the change instantly. If the network write fails,
+    // we roll back to the previous snapshot.
+    onOptimisticUpdate?.(next);
     const result = await writeData(next, token);
     if (!result.ok) {
+      onOptimisticUpdate?.(previous);
       toast.error(`Save failed: ${result.error ?? "unknown error"}`);
       return false;
     }

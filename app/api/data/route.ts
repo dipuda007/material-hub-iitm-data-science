@@ -1,22 +1,20 @@
 import { NextResponse } from "next/server";
-import { put, list, del } from "@vercel/blob";
 import seedRaw from "@/data/courses.json";
 import type { AppData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const BLOB_PATHNAME = "data.json";
 const SEED = seedRaw as AppData;
 
-// Find a Vercel Blob token even if Vercel injected it under a custom name.
-// Vercel may use either BLOB_READ_WRITE_TOKEN or <STORE_NAME>_READ_WRITE_TOKEN.
-function findBlobToken(): string | undefined {
-  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
-  for (const [k, v] of Object.entries(process.env)) {
-    if (k.endsWith("_READ_WRITE_TOKEN") && v) return v;
-  }
-  return undefined;
+// JSONBin.io configuration. Set these in Vercel project env vars:
+//   JSONBIN_BIN_ID    - the ID of the bin you created
+//   JSONBIN_API_KEY   - your master key from jsonbin.io account
+function jsonbinConfig(): { binId?: string; apiKey?: string } {
+  return {
+    binId: process.env.JSONBIN_BIN_ID,
+    apiKey: process.env.JSONBIN_API_KEY,
+  };
 }
 
 function unauthorized() {
@@ -42,18 +40,19 @@ function isAppData(x: unknown): x is AppData {
   return Array.isArray(v.types);
 }
 
-async function readFromBlob(): Promise<AppData> {
-  const token = findBlobToken();
-  if (!token) return SEED;
+async function readFromBin(): Promise<AppData> {
+  const { binId, apiKey } = jsonbinConfig();
+  if (!binId || !apiKey) return SEED;
   try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME, token });
-    const target = blobs.find((b) => b.pathname === BLOB_PATHNAME);
-    if (!target) return SEED;
-    // Cache-bust the blob URL: Vercel's CDN caches blob content by default
-    // with a long Cache-Control max-age, so a fresh PUT can appear "lost"
-    // until the CDN expires. Adding a unique query string forces a miss.
-    const url = `${target.url}${target.url.includes("?") ? "&" : "?"}t=${Date.now()}`;
-    const res = await fetch(url, { cache: "no-store" });
+    // "latest" returns the most recent version; "?meta=false" returns just the data.
+    const res = await fetch(
+      `https://api.jsonbin.io/v3/b/${binId}/latest?meta=false`,
+      {
+        method: "GET",
+        headers: { "X-Master-Key": apiKey },
+        cache: "no-store",
+      },
+    );
     if (!res.ok) return SEED;
     const parsed = (await res.json()) as unknown;
     if (!isAppData(parsed)) return SEED;
@@ -63,8 +62,35 @@ async function readFromBlob(): Promise<AppData> {
   }
 }
 
+async function writeToBin(data: AppData): Promise<{ ok: boolean; error?: string }> {
+  const { binId, apiKey } = jsonbinConfig();
+  if (!binId || !apiKey) {
+    return {
+      ok: false,
+      error: "JSONBin not configured. Set JSONBIN_BIN_ID and JSONBIN_API_KEY in Vercel env vars.",
+    };
+  }
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": apiKey,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return { ok: false, error: `JSONBin HTTP ${res.status}: ${text.slice(0, 200)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Network error" };
+  }
+}
+
 export async function GET() {
-  const data = await readFromBlob();
+  const data = await readFromBin();
   return NextResponse.json(data, {
     headers: { "Cache-Control": "no-store, must-revalidate" },
   });
@@ -72,16 +98,6 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   if (!checkToken(req)) return unauthorized();
-  const blobToken = findBlobToken();
-  if (!blobToken) {
-    return NextResponse.json(
-      {
-        error:
-          "Blob storage is not configured. Add a Vercel Blob store and connect it to this project.",
-      },
-      { status: 500 },
-    );
-  }
   let body: unknown;
   try {
     body = await req.json();
@@ -89,53 +105,19 @@ export async function PUT(req: Request) {
     return badRequest("Invalid JSON");
   }
   if (!isAppData(body)) return badRequest("Invalid shape: expected { types: [...] }");
-
-  try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME, token: blobToken });
-    for (const b of blobs) {
-      if (b.pathname === BLOB_PATHNAME) {
-        try {
-          await del(b.url, { token: blobToken });
-        } catch {
-          // ignore
-        }
-      }
-    }
-    const result = await put(BLOB_PATHNAME, JSON.stringify(body), {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "application/json",
-      // 0 = blob URL serves fresh content on every request, so subsequent
-      // GETs see the latest data immediately after a write.
-      cacheControlMaxAge: 0,
-      token: blobToken,
-    });
-    return NextResponse.json({ ok: true, url: result.url });
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Write failed" },
-      { status: 500 },
-    );
+  const result = await writeToBin(body);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: Request) {
   if (!checkToken(req)) return unauthorized();
-  const blobToken = findBlobToken();
-  if (!blobToken) return NextResponse.json({ ok: true });
-  try {
-    const { blobs } = await list({ prefix: BLOB_PATHNAME, token: blobToken });
-    for (const b of blobs) {
-      if (b.pathname === BLOB_PATHNAME) {
-        try {
-          await del(b.url, { token: blobToken });
-        } catch {
-          // ignore
-        }
-      }
-    }
-  } catch {
-    // ignore
+  // Reset = write the original seed back so visitors see defaults again.
+  const result = await writeToBin(SEED);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
 }

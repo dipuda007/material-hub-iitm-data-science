@@ -2,20 +2,17 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Diagnostic endpoint. Returns *names* of env vars (never values) so you can
-// verify the Vercel Blob token is actually injected into this deployment.
+// Diagnostic endpoint. Returns whether the env vars are set (never their values).
 export async function GET() {
-  const tokenKeys = Object.keys(process.env).filter((k) =>
-    k.endsWith("_READ_WRITE_TOKEN"),
-  );
-  const adminUserSet = !!process.env.ADMIN_USER;
-  const adminPassSet = !!process.env.ADMIN_PASS;
+  const binIdSet = !!process.env.JSONBIN_BIN_ID;
+  const apiKeySet = !!process.env.JSONBIN_API_KEY;
   return NextResponse.json({
-    blob_token_env_keys: tokenKeys,
-    blob_configured: tokenKeys.length > 0,
-    admin_user_env_set: adminUserSet,
-    admin_pass_env_set: adminPassSet,
-    node_env: process.env.NODE_ENV,
+    storage: "jsonbin.io",
+    jsonbin_bin_id_set: binIdSet,
+    jsonbin_api_key_set: apiKeySet,
+    jsonbin_configured: binIdSet && apiKeySet,
+    admin_user_env_set: !!process.env.ADMIN_USER,
+    admin_pass_env_set: !!process.env.ADMIN_PASS,
     vercel_env: process.env.VERCEL_ENV ?? null,
   });
 }

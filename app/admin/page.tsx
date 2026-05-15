@@ -35,7 +35,7 @@ export default function AdminPage() {
 }
 
 function AdminPanel() {
-  const { data, ready } = useAppData();
+  const { data, ready, setData, refresh } = useAppData();
   const router = useRouter();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = React.useState(false);
@@ -96,12 +96,16 @@ function AdminPanel() {
         ) {
           throw new Error("invalid shape");
         }
-        const result = await writeData(
-          { version: 2, types: parsed.types },
-          token,
-        );
-        if (result.ok) toast.success("Imported");
-        else toast.error(`Import failed: ${result.error ?? "unknown"}`);
+        const next: AppData = { version: 2, types: parsed.types };
+        const previous = data;
+        setData(next); // optimistic
+        const result = await writeData(next, token);
+        if (result.ok) {
+          toast.success("Imported");
+        } else {
+          setData(previous);
+          toast.error(`Import failed: ${result.error ?? "unknown"}`);
+        }
       } catch {
         toast.error("Invalid JSON file");
       }
@@ -116,8 +120,12 @@ function AdminPanel() {
       return;
     }
     const result = await resetData(token);
-    if (result.ok) toast.success("Reset to defaults");
-    else toast.error(`Reset failed: ${result.error ?? "unknown"}`);
+    if (result.ok) {
+      toast.success("Reset to defaults");
+      await refresh();
+    } else {
+      toast.error(`Reset failed: ${result.error ?? "unknown"}`);
+    }
   }
 
   return (
@@ -200,7 +208,7 @@ function AdminPanel() {
       </div>
 
       <div className="mt-6">
-        <AdminTree data={data} />
+        <AdminTree data={data} onOptimisticUpdate={setData} />
       </div>
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground">
