@@ -20,19 +20,18 @@ export default function AdminLoginPage() {
     if (isAdmin()) router.replace("/admin");
   }, [router]);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    setTimeout(() => {
-      if (tryLogin(user.trim(), pass)) {
-        toast.success("Welcome back, admin");
-        router.replace("/admin");
-      } else {
-        setError("Invalid username or password.");
-        setSubmitting(false);
-      }
-    }, 300);
+    const ok = await tryLogin(user.trim(), pass);
+    if (ok) {
+      toast.success("Welcome back, admin");
+      router.replace("/admin");
+    } else {
+      setError("Invalid username or password.");
+      setSubmitting(false);
+    }
   }
 
   return (

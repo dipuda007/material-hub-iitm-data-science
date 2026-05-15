@@ -22,9 +22,8 @@ import {
   countMaterialsInType,
   resetData,
   writeData,
-  SCHEMA_VERSION,
 } from "@/lib/data";
-import { logout } from "@/lib/auth";
+import { logout, getAdminToken } from "@/lib/auth";
 import type { AppData } from "@/lib/types";
 
 export default function AdminPage() {
@@ -82,7 +81,12 @@ function AdminPanel() {
     e.target.value = "";
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
+      const token = getAdminToken();
+      if (!token) {
+        toast.error("Not signed in");
+        return;
+      }
       try {
         const parsed = JSON.parse(String(reader.result)) as AppData;
         if (
@@ -92,8 +96,12 @@ function AdminPanel() {
         ) {
           throw new Error("invalid shape");
         }
-        writeData({ version: SCHEMA_VERSION, types: parsed.types });
-        toast.success("Imported");
+        const result = await writeData(
+          { version: 2, types: parsed.types },
+          token,
+        );
+        if (result.ok) toast.success("Imported");
+        else toast.error(`Import failed: ${result.error ?? "unknown"}`);
       } catch {
         toast.error("Invalid JSON file");
       }
@@ -101,9 +109,15 @@ function AdminPanel() {
     reader.readAsText(file);
   }
 
-  function handleReset() {
-    resetData();
-    toast.success("Reset to defaults");
+  async function handleReset() {
+    const token = getAdminToken();
+    if (!token) {
+      toast.error("Not signed in");
+      return;
+    }
+    const result = await resetData(token);
+    if (result.ok) toast.success("Reset to defaults");
+    else toast.error(`Reset failed: ${result.error ?? "unknown"}`);
   }
 
   return (

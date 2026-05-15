@@ -2,17 +2,28 @@
 
 import * as React from "react";
 import type { AppData } from "./types";
-import { getSeed, readData, onDataChange } from "./data";
+import { getSeed, fetchData, onDataChange } from "./data";
 
-export function useAppData(): { data: AppData; ready: boolean } {
+export function useAppData(): {
+  data: AppData;
+  ready: boolean;
+  refresh: () => Promise<void>;
+} {
   const [data, setData] = React.useState<AppData>(() => getSeed());
   const [ready, setReady] = React.useState(false);
 
-  React.useEffect(() => {
-    setData(readData());
+  const refresh = React.useCallback(async () => {
+    const d = await fetchData();
+    setData(d);
     setReady(true);
-    return onDataChange(() => setData(readData()));
   }, []);
 
-  return { data, ready };
+  React.useEffect(() => {
+    void refresh();
+    return onDataChange(() => {
+      void refresh();
+    });
+  }, [refresh]);
+
+  return { data, ready, refresh };
 }

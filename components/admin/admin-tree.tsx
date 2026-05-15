@@ -27,6 +27,7 @@ import type {
 } from "@/lib/types";
 import { getIcon } from "@/lib/icons";
 import { writeData } from "@/lib/data";
+import { getAdminToken } from "@/lib/auth";
 import { newId, uniqueSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import {
@@ -92,18 +93,33 @@ export function AdminTree({ data }: Props) {
 
   // --- mutations ---
 
-  function update(mut: (d: AppData) => void) {
+  async function update(
+    mut: (d: AppData) => void,
+    successMsg?: string,
+  ): Promise<boolean> {
+    const token = getAdminToken();
+    if (!token) {
+      toast.error("Not signed in");
+      return false;
+    }
     const next: AppData = JSON.parse(JSON.stringify(data));
     mut(next);
-    writeData(next);
+    const result = await writeData(next, token);
+    if (!result.ok) {
+      toast.error(`Save failed: ${result.error ?? "unknown error"}`);
+      return false;
+    }
+    if (successMsg) toast.success(successMsg);
+    return true;
   }
 
-  function onSave(values: EntityValues) {
+  async function onSave(values: EntityValues) {
     if (!editTarget) return;
     const t = editTarget;
+    let successMsg = "Saved";
 
     if (t.kind === "type") {
-      update((d) => {
+      await update((d) => {
         if (t.mode === "create") {
           const id = uniqueSlug(
             values.name,
@@ -117,7 +133,7 @@ export function AdminTree({ data }: Props) {
             description: values.description?.trim() || undefined,
             courses: [],
           });
-          toast.success(`Added type "${values.name}"`);
+          successMsg = `Added type "${values.name}"`;
         } else if (t.editingId) {
           const type = d.types.find((x) => x.id === t.editingId);
           if (type) {
@@ -125,12 +141,11 @@ export function AdminTree({ data }: Props) {
             type.icon = values.icon ?? type.icon;
             type.accent = values.accent ?? type.accent;
             type.description = values.description?.trim() || undefined;
-            toast.success("Saved");
           }
         }
-      });
+      }, successMsg);
     } else if (t.kind === "course") {
-      update((d) => {
+      await update((d) => {
         const type = d.types.find((x) => x.id === t.parentType);
         if (!type) return;
         if (t.mode === "create") {
@@ -147,7 +162,7 @@ export function AdminTree({ data }: Props) {
             description: values.description?.trim() || undefined,
             folders: [],
           });
-          toast.success(`Added course "${values.name}"`);
+          successMsg = `Added course "${values.name}"`;
         } else if (t.editingId) {
           const course = type.courses.find((x) => x.id === t.editingId);
           if (course) {
@@ -156,12 +171,11 @@ export function AdminTree({ data }: Props) {
             course.icon = values.icon ?? course.icon;
             course.accent = values.accent ?? course.accent;
             course.description = values.description?.trim() || undefined;
-            toast.success("Saved");
           }
         }
-      });
+      }, successMsg);
     } else if (t.kind === "folder") {
-      update((d) => {
+      await update((d) => {
         const type = d.types.find((x) => x.id === t.parentType);
         const course = type?.courses.find((x) => x.id === t.parentCourse);
         if (!course) return;
@@ -175,17 +189,14 @@ export function AdminTree({ data }: Props) {
             name: values.name.trim(),
             materials: [],
           });
-          toast.success(`Added folder "${values.name}"`);
+          successMsg = `Added folder "${values.name}"`;
         } else if (t.editingId) {
           const folder = course.folders.find((x) => x.id === t.editingId);
-          if (folder) {
-            folder.name = values.name.trim();
-            toast.success("Saved");
-          }
+          if (folder) folder.name = values.name.trim();
         }
-      });
+      }, successMsg);
     } else if (t.kind === "material") {
-      update((d) => {
+      await update((d) => {
         const type = d.types.find((x) => x.id === t.parentType);
         const course = type?.courses.find((x) => x.id === t.parentCourse);
         const folder = course?.folders.find((x) => x.id === t.parentFolder);
@@ -198,7 +209,7 @@ export function AdminTree({ data }: Props) {
             type: values.type ?? "website",
             url: (values.url ?? "").trim(),
           });
-          toast.success(`Added "${values.name}"`);
+          successMsg = `Added "${values.name}"`;
         } else if (t.editingId) {
           const mat = folder.materials.find((x) => x.id === t.editingId);
           if (mat) {
@@ -206,17 +217,16 @@ export function AdminTree({ data }: Props) {
             mat.description = values.description?.trim() || undefined;
             mat.type = values.type ?? mat.type;
             mat.url = (values.url ?? "").trim();
-            toast.success("Saved");
           }
         }
-      });
+      }, successMsg);
     }
   }
 
-  function onDelete() {
+  async function onDelete() {
     if (!deleteTarget) return;
     const t = deleteTarget;
-    update((d) => {
+    await update((d) => {
       if (t.kind === "type") {
         d.types = d.types.filter((x) => x.id !== t.typeId);
       } else if (t.kind === "course") {
@@ -236,8 +246,7 @@ export function AdminTree({ data }: Props) {
             (m) => m.id !== t.materialId,
           );
       }
-    });
-    toast.success(`Deleted "${t.name}"`);
+    }, `Deleted "${t.name}"`);
   }
 
   // --- render ---

@@ -9,52 +9,96 @@ import type {
 } from "./types";
 
 const SEED = seed as AppData;
-const KEY = "mh:data:v2";
 export const SCHEMA_VERSION = 2;
 
 export function getSeed(): AppData {
   return JSON.parse(JSON.stringify(SEED)) as AppData;
 }
 
-export function readData(): AppData {
+// --- network-backed data layer (Vercel Blob via /api/data) ---
+
+export async function fetchData(): Promise<AppData> {
   if (typeof window === "undefined") return getSeed();
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return getSeed();
-    const parsed = JSON.parse(raw) as AppData;
-    if (!parsed || parsed.version !== SCHEMA_VERSION || !Array.isArray(parsed.types)) {
-      return getSeed();
-    }
+    const res = await fetch("/api/data", {
+      cache: "no-store",
+      headers: { accept: "application/json" },
+    });
+    if (!res.ok) return getSeed();
+    const parsed = (await res.json()) as AppData;
+    if (!parsed || !Array.isArray(parsed.types)) return getSeed();
     return parsed;
   } catch {
     return getSeed();
   }
 }
 
-export function writeData(d: AppData) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify({ ...d, version: SCHEMA_VERSION }));
-  window.dispatchEvent(new CustomEvent("mh:data"));
+export interface WriteResult {
+  ok: boolean;
+  error?: string;
 }
 
-export function resetData() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(KEY);
-  window.dispatchEvent(new CustomEvent("mh:data"));
+export async function writeData(
+  data: AppData,
+  token: string,
+): Promise<WriteResult> {
+  if (typeof window === "undefined") return { ok: false, error: "No window" };
+  try {
+    const res = await fetch("/api/data", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": token,
+      },
+      body: JSON.stringify({ ...data, version: SCHEMA_VERSION }),
+    });
+    if (!res.ok) {
+      const body = (await res
+        .json()
+        .catch(() => ({ error: `HTTP ${res.status}` }))) as { error?: string };
+      return { ok: false, error: body.error ?? `HTTP ${res.status}` };
+    }
+    window.dispatchEvent(new CustomEvent("mh:data"));
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Network error",
+    };
+  }
+}
+
+export async function resetData(token: string): Promise<WriteResult> {
+  if (typeof window === "undefined") return { ok: false, error: "No window" };
+  try {
+    const res = await fetch("/api/data", {
+      method: "DELETE",
+      headers: { "x-admin-token": token },
+    });
+    if (!res.ok) {
+      const body = (await res
+        .json()
+        .catch(() => ({ error: `HTTP ${res.status}` }))) as { error?: string };
+      return { ok: false, error: body.error ?? `HTTP ${res.status}` };
+    }
+    window.dispatchEvent(new CustomEvent("mh:data"));
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Network error",
+    };
+  }
 }
 
 export function onDataChange(handler: () => void) {
   if (typeof window === "undefined") return () => {};
   const fn = () => handler();
   window.addEventListener("mh:data", fn);
-  window.addEventListener("storage", fn);
-  return () => {
-    window.removeEventListener("mh:data", fn);
-    window.removeEventListener("storage", fn);
-  };
+  return () => window.removeEventListener("mh:data", fn);
 }
 
-// --- selectors (operate on a passed-in AppData) ---
+// --- selectors (pure, work on a passed-in AppData) ---
 
 export function getTypes(d: AppData): CourseType[] {
   return d.types;
